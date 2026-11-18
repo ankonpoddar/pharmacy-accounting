@@ -1,0 +1,46 @@
+{
+  "appName": "Pharmacy Accounting",
+  "packageName": "com.pharmacy.accounting",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "android": {
+    "buildOptions": {
+      "javacVersion": "17",
+      "androidBuildTools": "34.0.0",
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "buildToolsVersion": "34.0.0",
+      "signingConfig": "release"
+    },
+    "allowMixedContent": true,
+    "captureInput": true,
+    "usesLightThemeBars": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowAfter": 1000,
+      "androidScaleType": "CENTER_CROP",
+      "splashScreenDelay": 3000
+    },
+    "Keyboard": {
+      "resize": true,
+      "resizeCurved": false,
+      "resizeAssisted": false
+    },
+    "StatusBars": {
+      "style": "LIGHT",
+      "backgroundColor": "#047857"
+    }
+  },
+  "ios": {
+    "contentPath": "ios",
+    "bounds": false,
+    "preferredContentSchema": "https"
+  },
+  "server": {
+    "allowWebConfig": false,
+    "cleartext": false,
+    "hostname": "localhost"
+  },
+  "appId": "com.pharmacy.accounting"
+}

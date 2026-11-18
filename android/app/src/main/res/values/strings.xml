@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Pharmacy Accounting</string>
+    <string name="title_activity_main">Pharmacy Accounting</string>
+    <string name="package_name">com.pharmacy.accounting</string>
+    <string name="custom_url_scheme">com.pharmacy.accounting</string>
+</resources>

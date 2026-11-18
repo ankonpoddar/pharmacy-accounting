@@ -1,0 +1,37 @@
+{
+  "name": "pharmacy-accounting",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "cap:init": "npx cap init \"Pharmacy Accounting\" com.pharmacy.accounting --web-dir=dist",
+    "cap:add:android": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:run:android": "npx cap run android",
+    "cap:open:android": "npx cap open android",
+    "scrape:medex": "node scripts/scrape-medex.js",
+    "seed:medicines": "node scripts/seed-medicines.js",
+    "functions:deploy": "cd functions && firebase deploy --only functions"
+  },
+  "dependencies": {
+    "@capacitor/cli": "^8.6.2",
+    "firebase": "^11.0.0",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.2.3",
+    "@capacitor/core": "^6.2.3",
+    "@capacitor/ios": "^6.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.11",
+    "vite": "^5.4.0",
+    "vite-plugin-pwa": "^0.20.0"
+  }
+}

@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #047857;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Bengali font applied when language is set to bn */
+body[data-lang='bn'] {
+  font-family: 'Noto Sans Bengali', 'Solomie', system-ui, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Toast animation */
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.toast-in { animation: slideIn 0.25s ease-out; }
+
+/* Fade-in for modals */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.fade-in { animation: fadeIn 0.15s ease-out; }
+
+/* Number input - hide spinners */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* Safe area for PWA bottom */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0);
+}
