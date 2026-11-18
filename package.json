@@ -17,15 +17,15 @@
     "functions:deploy": "cd functions && firebase deploy --only functions"
   },
   "dependencies": {
-    "@capacitor/cli": "^8.6.2",
+    "@capacitor/cli": "^7.6.10",
     "firebase": "^11.0.0",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@capacitor/android": "^6.2.3",
-    "@capacitor/core": "^6.2.3",
+    "@capacitor/android": "^7.6.10",
+    "@capacitor/core": "^7.6.10",
     "@capacitor/ios": "^6.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.4.20",
