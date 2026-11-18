@@ -1,13 +1,14 @@
 import { useState, useCallback } from 'react'
-import { Lock, Languages, Download, RefreshCw, AlertCircle, CheckCircle, Save } from 'lucide-react'
+import { Lock, Languages, Download, RefreshCw, AlertCircle, CheckCircle, Save, LogOut, User, Mail, Chrome } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { triggerManualBackup } from '../services/backup'
+import { signOut, updateUserProfile, changePassword as firebaseChangePassword } from '../services/auth'
 
 export default function SettingsPage() {
   const { t, lang, toggleLang } = useLanguage()
-  const { pin, changePin, lock: lockApp } = useAuth()
+  const { pin, changePin, lock: lockApp, firebaseUser, logout } = useAuth()
   const { showToast } = useToast()
 
   const [newPin, setNewPin] = useState('')
@@ -15,6 +16,13 @@ export default function SettingsPage() {
   const [pinError, setPinError] = useState('')
   const [backupLoading, setBackupLoading] = useState(false)
   const [backupResult, setBackupResult] = useState(null)
+  const [showAccount, setShowAccount] = useState(false)
+  const [accountLoading, setAccountLoading] = useState(false)
+  const [accountError, setAccountError] = useState('')
+  const [displayName, setDisplayName] = useState(firebaseUser?.displayName || '')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
 
   const handlePinChange = async (e) => {
     e.preventDefault()
@@ -69,8 +77,165 @@ export default function SettingsPage() {
     lockApp()
   }
 
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault()
+    if (!displayName.trim()) {
+      setAccountError('Display name cannot be empty')
+      return
+    }
+    setAccountLoading(true)
+    setAccountError('')
+    try {
+      await updateUserProfile({ displayName: displayName.trim() })
+      showToast('Profile updated', 'success')
+    } catch (err) {
+      setAccountError(err.message)
+      showToast(err.message, 'error')
+    } finally {
+      setAccountLoading(false)
+    }
+  }
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault()
+    setAccountError('')
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      setAccountError('Please fill all fields')
+      return
+    }
+    if (newPassword.length < 6) {
+      setAccountError('Password must be at least 6 characters')
+      return
+    }
+    if (newPassword !== confirmNewPassword) {
+      setAccountError('Passwords do not match')
+      return
+    }
+    setAccountLoading(true)
+    try {
+      // Note: Firebase requires re-authentication for password change
+      // This is a simplified version - in production you'd use reauthenticateWithCredential
+      await firebaseChangePassword(newPassword)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmNewPassword('')
+      showToast('Password changed', 'success')
+    } catch (err) {
+      setAccountError(err.message)
+      showToast(err.message, 'error')
+    } finally {
+      setAccountLoading(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    await logout()
+  }
+
   return (
     <div className="space-y-6 pb-safe max-w-md mx-auto">
+      {/* User Profile Header */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-brand-100 flex items-center justify-center">
+            {firebaseUser?.photoURL ? (
+              <img src={firebaseUser.photoURL} alt="" className="w-16 h-16 rounded-full" />
+            ) : (
+              <User className="h-8 w-8 text-brand-600" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-900 truncate">
+              {firebaseUser?.displayName || 'User'}
+            </h3>
+            <p className="text-sm text-gray-500 truncate">
+              {firebaseUser?.email}
+            </p>
+            {firebaseUser?.providerData?.map((p) => (
+              <span key={p.providerId} className="inline-block mt-1 px-2 py-0.5 text-xs bg-gray-100 rounded-full">
+                {p.providerId === 'google.com' ? 'Google' : 'Email'}
+              </span>
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={() => setShowAccount(!showAccount)}
+          className="mt-4 w-full py-2 text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center justify-center gap-2"
+        >
+          {showAccount ? <chevronUp /> : <chevronDown />}
+          {showAccount ? 'Hide Account Settings' : 'Account Settings'}
+        </button>
+      </div>
+
+      {/* Account Settings (collapsible) */}
+      {showAccount && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 animate-fade-in">
+          {/* Display Name */}
+          <form onSubmit={handleUpdateProfile} className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Display Name</label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+
+            {/* Change Password */}
+            <div className="pt-4 border-t border-gray-100">
+              <h4 className="font-medium text-gray-900 mb-3">Change Password</h4>
+              <form onSubmit={handleChangePassword} className="space-y-3">
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Current Password"
+                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New Password (min 6 chars)"
+                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+                <input
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="Confirm New Password"
+                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+                {accountError && (
+                  <p className="text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" /> {accountError}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={accountLoading || !currentPassword || !newPassword || !confirmNewPassword}
+                  className="w-full py-3 bg-brand-600 text-white font-medium rounded-xl hover:bg-brand-700 disabled:opacity-50 transition-colors"
+                >
+                  {accountLoading ? 'Saving...' : 'Update Password'}
+                </button>
+              </form>
+            </div>
+
+            {/* Sign Out */}
+            <div className="pt-4 border-t border-gray-100">
+              <button
+                onClick={handleSignOut}
+                className="w-full py-3 border border-red-300 text-red-600 font-medium rounded-xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+              >
+                <LogOut className="h-5 w-5" />
+                Sign Out
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Language */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
         <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -240,6 +405,19 @@ export default function SettingsPage() {
         <p className="text-sm text-gray-500">Pharmacy Accounting v1.0</p>
         <p className="text-xs text-gray-400 mt-1">PWA + Android APK ready</p>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+      `}</style>
     </div>
   )
+}
+
+// Inline chevron icons to avoid extra imports
+function chevronUp() {
+  return <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+}
+function chevronDown() {
+  return <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
 }

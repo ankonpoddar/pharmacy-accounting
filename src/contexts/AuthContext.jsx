@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { onAuthStateChange, signOut as firebaseSignOut, getCurrentUser } from '../services/auth'
 
 const AuthContext = createContext()
 
@@ -9,19 +10,42 @@ const SESSION_KEY = 'pharmacy_session'
 export function AuthProvider({ children }) {
   const [isLocked, setIsLocked] = useState(true)
   const [pin, setPin] = useState(() => localStorage.getItem(PIN_KEY) || DEFAULT_PIN)
+  const [firebaseUser, setFirebaseUser] = useState(null)
+  const [firebaseLoading, setFirebaseLoading] = useState(true)
+  const [authError, setAuthError] = useState(null)
 
-  const checkSession = useCallback(() => {
+  // Firebase auth state listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange((user) => {
+      setFirebaseUser(user)
+      setFirebaseLoading(false)
+      if (!user) {
+        // User signed out - lock the app
+        sessionStorage.removeItem(SESSION_KEY)
+        setIsLocked(true)
+      }
+    })
+    return () => unsubscribe()
+  }, [])
+
+  // PIN session check (only after Firebase auth is ready)
+  const checkPinSession = useCallback(() => {
+    if (firebaseLoading) return
+    if (!firebaseUser) {
+      setIsLocked(true)
+      return
+    }
     const session = sessionStorage.getItem(SESSION_KEY)
     if (session === 'unlocked') {
       setIsLocked(false)
     } else {
       setIsLocked(true)
     }
-  }, [])
+  }, [firebaseUser, firebaseLoading])
 
   useEffect(() => {
-    checkSession()
-  }, [checkSession])
+    checkPinSession()
+  }, [checkPinSession])
 
   const verifyPin = useCallback((input) => {
     if (input === pin) {
@@ -46,8 +70,23 @@ export function AuthProvider({ children }) {
     setIsLocked(true)
   }, [])
 
+  const logout = useCallback(async () => {
+    await firebaseSignOut()
+    // Firebase auth listener will handle locking
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ isLocked, verifyPin, changePin, lock, pin }}>
+    <AuthContext.Provider value={{
+      isLocked,
+      firebaseUser,
+      firebaseLoading,
+      authError,
+      verifyPin,
+      changePin,
+      lock,
+      logout,
+      pin
+    }}>
       {children}
     </AuthContext.Provider>
   )

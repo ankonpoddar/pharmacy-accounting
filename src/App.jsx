@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, ShoppingBag, FileText, Receipt, Settings, Menu, X } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, FileText, Receipt, Settings, Menu, X, LogOut, User } from 'lucide-react'
 import { LanguageProvider } from './contexts/LanguageContext'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider, useToast } from './contexts/ToastContext'
 import LockScreen from './components/LockScreen'
 import DashboardPage from './pages/DashboardPage'
 import SettingsPage from './pages/SettingsPage'
+import LoginPage from './pages/LoginPage'
 import { useLanguage } from './contexts/LanguageContext'
 
 function AppContent() {
-  const { isLocked } = useAuth()
+  const {
+    isLocked,
+    firebaseUser,
+    firebaseLoading,
+    logout,
+    verifyPin
+  } = useAuth()
   const { toasts, dismissToast } = useToast()
   const { t, lang } = useLanguage()
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -23,10 +30,31 @@ function AppContent() {
     { id: 'settings', label: t('settings'), icon: Settings }
   ]
 
+  // Show loading while Firebase auth initializes
+  if (firebaseLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 mb-4">
+            <div className="h-8 w-8 text-white animate-spin border-4 border-white/30 border-t-white rounded-full" />
+          </div>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Not authenticated with Firebase - show login page
+  if (!firebaseUser) {
+    return <LoginPage />
+  }
+
+  // Authenticated but PIN locked - show lock screen
   if (isLocked) {
     return <LockScreen onUnlock={() => {}} />
   }
 
+  // Fully authenticated and unlocked - show main app
   const renderTab = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -46,6 +74,10 @@ function AppContent() {
       default:
         return <DashboardPage />
     }
+  }
+
+  const handleLogout = async () => {
+    await logout()
   }
 
   return (
@@ -131,6 +163,15 @@ function AppContent() {
                   <span>{tab.label}</span>
                 </button>
               ))}
+              <div className="pt-4 border-t border-gray-100">
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-3 rounded-xl flex items-center gap-3 text-left text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </nav>
           </div>
         </div>
